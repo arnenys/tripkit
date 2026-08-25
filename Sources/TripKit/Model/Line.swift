@@ -7,6 +7,8 @@ public class Line: NSObject, NSSecureCoding {
     public let id: String?
     /// Operator if the line.
     public let network: String?
+    /// Id of the operator, if available. Not populated by every provider.
+    public let networkId: String?
     /// Type of the line.
     public let product: Product?
     /// Short name of the line, should be used for displaying the line.
@@ -33,9 +35,10 @@ public class Line: NSObject, NSSecureCoding {
     static let SECURE_CONNECTION = Line(id: nil, network: nil, product: nil, label: nil)
     static let DO_NOT_CHANGE = Line(id: nil, network: nil, product: nil, label: nil)
     
-    public init(id: String?, network: String?, product: Product?, label: String?, name: String?, number: String? = nil, vehicleNumber: String? = nil, style: LineStyle!, attr: [Attr]?, message: String?, direction: Direction? = nil) {
+    public init(id: String?, network: String?, product: Product?, label: String?, name: String?, number: String? = nil, vehicleNumber: String? = nil, style: LineStyle!, attr: [Attr]?, message: String?, direction: Direction? = nil, networkId: String? = nil) {
         self.id = id
         self.network = network
+        self.networkId = networkId
         self.product = product
         self.label = label
         self.name = name
@@ -54,6 +57,7 @@ public class Line: NSObject, NSSecureCoding {
     required convenience public init?(coder aDecoder: NSCoder) {
         let id = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.id) as String?
         let network = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.network) as String?
+        let networkId = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.networkId) as String?
         let product = Product(rawValue: aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.product) as String? ?? "")
         let label = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.label) as String?
         let name = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.name) as String?
@@ -77,7 +81,7 @@ public class Line: NSObject, NSSecureCoding {
             direction = nil
         }
         
-        self.init(id: id, network: network, product: product, label: label, name: name, number: number, vehicleNumber: vehicleNumber, style: style, attr: attr, message: message, direction: direction)
+        self.init(id: id, network: network, product: product, label: label, name: name, number: number, vehicleNumber: vehicleNumber, style: style, attr: attr, message: message, direction: direction, networkId: networkId)
     }
     
     public func encode(with aCoder: NSCoder) {
@@ -86,6 +90,9 @@ public class Line: NSObject, NSSecureCoding {
         }
         if let network = network {
             aCoder.encode(network, forKey: PropertyKey.network)
+        }
+        if let networkId = networkId {
+            aCoder.encode(networkId, forKey: PropertyKey.networkId)
         }
         if let product = product {
             aCoder.encode(product.rawValue, forKey: PropertyKey.product)
@@ -145,6 +152,7 @@ public class Line: NSObject, NSSecureCoding {
         
         static let id = "id"
         static let network = "network"
+        static let networkId = "networkId"
         static let product = "product"
         static let label = "label"
         static let name = "name"

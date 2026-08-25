@@ -1171,17 +1171,17 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         return locations
     }
     
-    func parseOpList(opList: JSON) throws -> [String]? {
+    func parseOpList(opList: JSON) throws -> [(name: String, id: String?)]? {
         guard let opList = opList.array else { return nil }
-        var operators: [String] = []
+        var operators: [(name: String, id: String?)] = []
         for op in opList {
             guard let name = op["name"].string else { throw ParseError(reason: "could not parse operator") }
-            operators.append(name)
+            operators.append((name: name, id: op["id"].string))
         }
         return operators
     }
-    
-    func parseProdList(prodList: JSON, operators: [String]?) throws -> [Line] {
+
+    func parseProdList(prodList: JSON, operators: [(name: String, id: String?)]?) throws -> [Line] {
         var lines: [Line] = []
         for prod in prodList.arrayValue {
             let name = (prod["addName"].string ?? prod["name"].string)?.emptyToNil
@@ -1198,7 +1198,7 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
                 vehicleNumber = nil
             }
 
-            lines.append(newLine(id: id, network: op, product: product, name: name, shortName: nameS, number: number, vehicleNumber: vehicleNumber))
+            lines.append(newLine(id: id, network: op?.name, product: product, name: name, shortName: nameS, number: number, vehicleNumber: vehicleNumber, networkId: op?.id))
         }
         return lines
     }
@@ -1534,7 +1534,7 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         }
     }
     
-    func newLine(id: String?, network: String?, product: Product?, name: String?, shortName: String?, number: String?, vehicleNumber: String?) -> Line {
+    func newLine(id: String?, network: String?, product: Product?, name: String?, shortName: String?, number: String?, vehicleNumber: String?, networkId: String? = nil) -> Line {
         let longName: String?
         if let name = name {
             longName = name + (number != nil && !name.hasSuffix(number!) ? "(\(number!))" : "")
@@ -1543,7 +1543,7 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         } else {
             longName = number
         }
-        
+
         if product == .bus || product == .tram {
             let label: String?
             if let shortName = shortName {
@@ -1553,13 +1553,13 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             } else {
                 label = name
             }
-            return Line(id: id, network: network, product: product, label: label, name: longName, number: number, style: lineStyle(network: network, product: product, label: label), attr: nil, message: nil)
+            return Line(id: id, network: network, product: product, label: label, name: longName, number: number, style: lineStyle(network: network, product: product, label: label), attr: nil, message: nil, networkId: networkId)
         } else {
             var label = name ?? shortName ?? number
             if label?.contains("Zug-Nr.") ?? false, let shortName = shortName, name?.contains(shortName) ?? false {
                 label = shortName
             }
-            return Line(id: id, network: network, product: product, label: label?.replacingOccurrences(of: " ", with: ""), name: longName, number: number, vehicleNumber: vehicleNumber, style: lineStyle(network: network, product: product, label: name), attr: nil, message: nil)
+            return Line(id: id, network: network, product: product, label: label?.replacingOccurrences(of: " ", with: ""), name: longName, number: number, vehicleNumber: vehicleNumber, style: lineStyle(network: network, product: product, label: name), attr: nil, message: nil, networkId: networkId)
         }
     }
     
