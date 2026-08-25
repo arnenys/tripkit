@@ -690,7 +690,8 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         for jny in res["jnyL"].arrayValue {
             // JourneyMatch can list the same physical journey more than once (e.g. joint
             // ÖBB/DB workings) – skip repeats of the same jid rather than returning duplicates.
-            if let jid = jny["jid"].string {
+            // TEMPORARILY DISABLED for investigation - re-enable after checking.
+            if false, let jid = jny["jid"].string {
                 guard seenJourneyIds.insert(jid).inserted else { continue }
             }
             // Skip individual entries that fail to parse (e.g. a thin stopL) rather than
