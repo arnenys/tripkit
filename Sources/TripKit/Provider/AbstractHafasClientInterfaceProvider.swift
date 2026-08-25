@@ -286,14 +286,27 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
     ///
     /// Not part of the `NetworkProvider` protocol, since non-HCI providers have no way to implement this.
     ///
+    /// - Parameter date: restricts results to trips running on/around this date and time. If `nil`, HAFAS
+    ///   defaults to today. Has no effect together with `onlyCurrentlyRunning: true`, since that already
+    ///   restricts to trips currently in motion.
+    ///
     /// - Note: unlike ``queryJourneyDetail(context:completion:)``, this does not send `getPasslist`/`getPolyline` —
     ///   at least ÖBB's endpoint rejects the request entirely (`PARSE` error) if they're included.
-    public func queryTripsByName(name: String, onlyCurrentlyRunning: Bool = true, products: [Product]? = nil, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) -> AsyncRequest {
-        let req: [String: Any] = [
+    public func queryTripsByName(name: String, onlyCurrentlyRunning: Bool = true, date: Date? = nil, products: [Product]? = nil, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) -> AsyncRequest {
+        var req: [String: Any] = [
             "input": name,
             "onlyCR": onlyCurrentlyRunning,
             "jnyFltrL": [["type": "PROD", "mode": "BIT", "value": productsString(products: products ?? Product.allCases)]]
         ]
+        if let date = date {
+            req["date"] = jsonDate(from: date)
+            // ÖBB's endpoint returns NO_MATCH for `time: "000000"` specifically (confirmed live), regardless
+            // of date - so only send a time when it isn't exactly midnight.
+            let time = jsonTime(from: date)
+            if time != "000000" {
+                req["time"] = time
+            }
+        }
         let request = wrapJsonApiRequest(meth: "JourneyMatch", req: req, formatted: false)
         let urlBuilder = UrlBuilder(path: mgateEndpoint, encoding: requestUrlEncoding)
         requestVerification.appendParameters(to: urlBuilder, requestString: request)
