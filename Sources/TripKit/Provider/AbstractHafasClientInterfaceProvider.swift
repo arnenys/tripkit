@@ -659,7 +659,13 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         let loadFactors = try parseLoadFactorList(tcocL: loadFactorList)
 
         var trips: [Trip] = []
+        var seenJourneyIds: Set<String> = []
         for jny in res["jnyL"].arrayValue {
+            // JourneyMatch can list the same physical journey more than once (e.g. joint
+            // ÖBB/DB workings) – skip repeats of the same jid rather than returning duplicates.
+            if let jid = jny["jid"].string {
+                guard seenJourneyIds.insert(jid).inserted else { continue }
+            }
             // Skip individual entries that fail to parse (e.g. a thin stopL) rather than
             // failing the whole batch – JourneyMatch responses can contain dozens of trips.
             guard let baseDate = try? parseBaseDate(from: jny["date"].stringValue) else { continue }
