@@ -240,7 +240,9 @@ class TripKitProviderTestCase: XCTestCase {
     func testQueryTripsByName() {
         guard let hafasProvider = provider as? AbstractHafasClientInterfaceProvider else { return }
         for (index, testCase):(String, JSON) in settings["queryTripsByName"] {
-            let (request, result) = syncQueryTripsByName(provider: hafasProvider, name: testCase["name"].stringValue)
+            // onlyCurrentlyRunning: false, since Railjets only run ~5am-11pm and a live test run
+            // outside those hours would otherwise get NO_MATCH -> success([]) and fail the assert below.
+            let (request, result) = syncQueryTripsByName(provider: hafasProvider, name: testCase["name"].stringValue, onlyCurrentlyRunning: false)
             switch result {
             case .success(let trips):
                 os_log("success: %@", log: .testsLogger, type: .default, trips)
@@ -390,12 +392,12 @@ class TripKitProviderTestCase: XCTestCase {
         return (request_, result_)
     }
     
-    func syncQueryTripsByName(provider: AbstractHafasClientInterfaceProvider, name: String) -> (HttpRequest, QueryTripsByNameResult) {
+    func syncQueryTripsByName(provider: AbstractHafasClientInterfaceProvider, name: String, onlyCurrentlyRunning: Bool = true) -> (HttpRequest, QueryTripsByNameResult) {
         let expectation = self.expectation(description: "Network Task")
         var request: HttpRequest?
         var result: QueryTripsByNameResult?
 
-        _ = provider.queryTripsByName(name: name) { (httpRequest, completion: QueryTripsByNameResult) in
+        _ = provider.queryTripsByName(name: name, onlyCurrentlyRunning: onlyCurrentlyRunning) { (httpRequest, completion: QueryTripsByNameResult) in
             request = httpRequest
             result = completion
             expectation.fulfill()

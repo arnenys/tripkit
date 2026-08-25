@@ -281,7 +281,8 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         }
     }
 
-    /// Queries trips matching a train name/number (e.g. "RJ 63"), independent of a from/to route.
+    /// Queries trips matching a train name/number (e.g. "RJ54" — no space between category and number, at
+    /// least for ÖBB; "RJ 63" returns no matches), independent of a from/to route.
     ///
     /// Not part of the `NetworkProvider` protocol, since non-HCI providers have no way to implement this.
     ///
@@ -662,9 +663,13 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             // Skip individual entries that fail to parse (e.g. a thin stopL) rather than
             // failing the whole batch – JourneyMatch responses can contain dozens of trips.
             guard let baseDate = try? parseBaseDate(from: jny["date"].stringValue) else { continue }
-            let duration = (try? parseJsonTime(baseDate: baseDate, dateString: jny["durS"].string))??.timeIntervalSince(baseDate) ?? 0
             let line = lines[safe: jny["prodX"].int]
             guard let leg = try? processPublicLeg(jny: jny, baseDate: baseDate, locations: locations, line: line, rems: rems, messages: messages, encodedPolyList: encodedPolyList, loadFactors: loadFactors, departureStop: nil, arrivalStop: nil, tariffClass: nil) else { continue }
+            // JourneyMatch entries carry duration as `durS`, unlike JourneyDetails' `dur` – but fall back to
+            // `dur` too, since this parser is shared by any HCI provider, not just ÖBB. If neither is present,
+            // derive it from the parsed leg's own departure/arrival times.
+            let durationString = jny["durS"].string ?? jny["dur"].string
+            let duration = (try? parseJsonTime(baseDate: baseDate, dateString: durationString))??.timeIntervalSince(baseDate) ?? leg.arrivalTime.timeIntervalSince(leg.departureTime)
             trips.append(Trip(id: "", from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: []))
         }
 
