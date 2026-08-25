@@ -289,14 +289,23 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
     /// - Parameter date: restricts results to trips running on/around this date and time. If `nil`, HAFAS
     ///   defaults to today. Has no effect together with `onlyCurrentlyRunning: true`, since that already
     ///   restricts to trips currently in motion.
+    /// - Parameter excludeNonTrainCategories: drops results in known non-train categories (bus, ferry,
+    ///   subway, tram, cablecar/funicular) - see note below on why this can't be done via `Product`.
     ///
     /// - Note: unlike ``queryJourneyDetail(context:completion:)``, this does not send `getPasslist`/`getPolyline` —
     ///   at least ÖBB's endpoint rejects the request entirely (`PARSE` error) if they're included.
-    public func queryTripsByName(name: String, onlyCurrentlyRunning: Bool = true, date: Date? = nil, products: [Product]? = nil, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) -> AsyncRequest {
+    /// - Note: the request-level `PROD`/`BIT` filter doesn't use the same bit ordering as `productsMap`
+    ///   here (confirmed live against ÖBB: several bits mix trains and buses together), and `common.prodL[].cls`
+    ///   in the *response* uses its own endpoint-local bitmask too (confirmed: `cls: 2` means "Bus" for
+    ///   ÖBB's JourneyMatch, but `intToProduct` - built for `productsMap` - would misread it as
+    ///   `.highSpeedTrain`). So neither the request filter nor `Line.product` can be trusted to separate
+    ///   trains from buses for this endpoint; `excludeNonTrainCategories` instead matches the raw
+    ///   `prodCtx.catOut` string.
+    public func queryTripsByName(name: String, onlyCurrentlyRunning: Bool = true, date: Date? = nil, excludeNonTrainCategories: Bool = true, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) -> AsyncRequest {
         var req: [String: Any] = [
             "input": name,
             "onlyCR": onlyCurrentlyRunning,
-            "jnyFltrL": [["type": "PROD", "mode": "BIT", "value": productsString(products: products ?? Product.allCases)]]
+            "jnyFltrL": [["type": "PROD", "mode": "BIT", "value": allProductsString()]]
         ]
         if let date = date {
             req["date"] = jsonDate(from: date)
@@ -313,7 +322,7 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
 
         let httpRequest = HttpRequest(urlBuilder: urlBuilder).setPostPayload(request).setUserAgent(userAgent)
         return makeRequest(httpRequest) {
-            try self.queryTripsByNameParsing(request: httpRequest, completion: completion)
+            try self.queryTripsByNameParsing(request: httpRequest, excludeNonTrainCategories: excludeNonTrainCategories, completion: completion)
         } errorHandler: { err in
             completion(httpRequest, .failure(err))
         }
@@ -643,7 +652,12 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         completion(request, .success(trip: trip, leg: leg))
     }
 
-    func queryTripsByNameParsing(request: HttpRequest, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) throws {
+    /// Raw `prodCtx.catOut` values observed live for ÖBB's JourneyMatch that aren't trains. Not
+    /// exhaustive - unrecognized categories are assumed to be trains rather than excluded, since that's
+    /// the safer default for an incomplete denylist.
+    private static let nonTrainCategories: Set<String> = ["Bus", "Schiff", "U", "Tram", "Seilbahn", "Lift"]
+
+    func queryTripsByNameParsing(request: HttpRequest, excludeNonTrainCategories: Bool = true, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) throws {
         let svcRes = try validateResponse(with: request.responseData, requiredMethod: "JourneyMatch")
         if let error = svcRes["err"].string, error != "OK" {
             if error == "NO_MATCH" {
@@ -682,6 +696,13 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             // Skip individual entries that fail to parse (e.g. a thin stopL) rather than
             // failing the whole batch – JourneyMatch responses can contain dozens of trips.
             guard let baseDate = try? parseBaseDate(from: jny["date"].stringValue) else { continue }
+            // Neither the request-level PROD/BIT filter nor the parsed `line.product` can be trusted to
+            // separate trains from buses for this endpoint (see the doc comment on queryTripsByName) -
+            // match the raw category string instead, straight from the response JSON.
+            if excludeNonTrainCategories {
+                let catOut = prodList[jny["prodX"].intValue]["prodCtx", "catOut"].string ?? ""
+                if Self.nonTrainCategories.contains(catOut) { continue }
+            }
             let line = lines[safe: jny["prodX"].int]
             guard let leg = try? processPublicLeg(jny: jny, baseDate: baseDate, locations: locations, line: line, rems: rems, messages: messages, encodedPolyList: encodedPolyList, loadFactors: loadFactors, departureStop: nil, arrivalStop: nil, tariffClass: nil) else { continue }
             // JourneyMatch entries carry duration as `durS`, unlike JourneyDetails' `dur` – but fall back to
