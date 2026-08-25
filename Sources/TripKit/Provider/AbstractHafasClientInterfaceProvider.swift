@@ -676,7 +676,10 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             // derive it from the parsed leg's own departure/arrival times.
             let durationString = jny["durS"].string ?? jny["dur"].string
             let duration = (try? parseJsonTime(baseDate: baseDate, dateString: durationString))??.timeIntervalSince(baseDate) ?? leg.arrivalTime.timeIntervalSince(leg.departureTime)
-            trips.append(Trip(id: "", from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: []))
+            // Use the raw jid as the trip id, rather than Trip's fallback substitute id (built from
+            // stop names/times/line label) – two distinct journeys (e.g. a coupled/split working) can
+            // otherwise render identical substitute ids despite having different jids.
+            trips.append(Trip(id: jny["jid"].stringValue, from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: []))
         }
 
         completion(request, .success(trips: trips))
