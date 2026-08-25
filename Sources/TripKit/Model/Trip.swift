@@ -27,6 +27,10 @@ public class Trip: NSObject, NSSecureCoding {
     public let fares: [Fare]
     /// Context for refreshing the trip. See `NetworkProvider.refreshTrip`
     public var refreshContext: RefreshTripContext?
+    /// Every date within the schedule's validity period on which this trip actually runs, decoded from
+    /// HAFAS's `sDaysB` bitmask (one bit per day, starting at the timetable's first valid date). Only
+    /// populated by providers/queries that expose that data - currently `queryTripsByName`.
+    public let runningDays: [Date]?
     
     /// Total duration of this trip (in seconds).
     public let duration: TimeInterval
@@ -94,7 +98,7 @@ public class Trip: NSObject, NSSecureCoding {
         legs.compactMap({ $0 as? PublicLeg }).contains(where: { $0.isCancelled })
     }
     
-    public init(id: String, from: Location, to: Location, legs: [Leg], duration: TimeInterval, fares: [Fare], refreshContext: RefreshTripContext? = nil) {
+    public init(id: String, from: Location, to: Location, legs: [Leg], duration: TimeInterval, fares: [Fare], refreshContext: RefreshTripContext? = nil, runningDays: [Date]? = nil) {
         assert(!legs.isEmpty, "Legs cannot be empty")
         self._id = id
         self.from = from
@@ -107,8 +111,9 @@ public class Trip: NSObject, NSSecureCoding {
         }
         self.fares = fares
         self.refreshContext = refreshContext
+        self.runningDays = runningDays
     }
-    
+
     required convenience public init?(coder aDecoder: NSCoder) {
         guard
             let id = aDecoder.decodeObject(of: NSString.self, forKey: PropertyKey.id) as String?,
@@ -122,9 +127,10 @@ public class Trip: NSObject, NSSecureCoding {
         }
         let duration = aDecoder.decodeDouble(forKey: PropertyKey.duration)
         let refreshContext = aDecoder.decodeObject(of: RefreshTripContext.self, forKey: PropertyKey.refreshContext)
-        self.init(id: id, from: from, to: to, legs: legs, duration: duration, fares: fares, refreshContext: refreshContext)
+        let runningDays = aDecoder.decodeObject(of: [NSArray.self, NSDate.self], forKey: PropertyKey.runningDays) as? [Date]
+        self.init(id: id, from: from, to: to, legs: legs, duration: duration, fares: fares, refreshContext: refreshContext, runningDays: runningDays)
     }
-    
+
     public func encode(with aCoder: NSCoder) {
         aCoder.encode(id, forKey: PropertyKey.id)
         aCoder.encode(from, forKey: PropertyKey.from)
@@ -134,6 +140,9 @@ public class Trip: NSObject, NSSecureCoding {
         aCoder.encode(fares, forKey: PropertyKey.fares)
         if let refreshContext = refreshContext {
             aCoder.encode(refreshContext, forKey: PropertyKey.refreshContext)
+        }
+        if let runningDays = runningDays {
+            aCoder.encode(runningDays as NSArray, forKey: PropertyKey.runningDays)
         }
     }
     
@@ -177,6 +186,7 @@ public class Trip: NSObject, NSSecureCoding {
         static let duration = "duration"
         static let fares = "fares"
         static let refreshContext = "refreshContext"
+        static let runningDays = "runningDays"
         
     }
     

@@ -714,7 +714,8 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             // Use the raw jid as the trip id, rather than Trip's fallback substitute id (built from
             // stop names/times/line label) – two distinct journeys (e.g. a coupled/split working) can
             // otherwise render identical substitute ids despite having different jids.
-            trips.append(Trip(id: jny["jid"].stringValue, from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: []))
+            let runningDays = parseRunningDays(sDaysB: jny["sDaysL", 0, "sDaysB"].string, fpB: res["fpB"].string)
+            trips.append(Trip(id: jny["jid"].stringValue, from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: [], runningDays: runningDays))
         }
 
         completion(request, .success(trips: trips))
@@ -1103,6 +1104,39 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         return baseDate
     }
     
+    /// Decodes HAFAS's `sDaysB` traffic-days bitmask into the actual calendar dates a schedule pattern
+    /// runs on. `sDaysB` is a hex string; each bit (MSB first within each byte) represents one day
+    /// starting at `fpB` (the timetable's first valid date) - bit set means the trip runs that day.
+    /// Mirrors hafas-client's `parseScheduledDays` (parse/scheduled-days.js), the reference implementation
+    /// for this HAFAS-wide format.
+    func parseRunningDays(sDaysB: String?, fpB: String?) -> [Date]? {
+        guard let sDaysB = sDaysB, let fpB = fpB, let startDate = try? parseBaseDate(from: fpB) else { return nil }
+        guard sDaysB.count % 2 == 0 else { return nil }
+        var bytes: [UInt8] = []
+        var index = sDaysB.startIndex
+        while index < sDaysB.endIndex {
+            let next = sDaysB.index(index, offsetBy: 2)
+            guard let byte = UInt8(sDaysB[index..<next], radix: 16) else { return nil }
+            bytes.append(byte)
+            index = next
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        var runningDays: [Date] = []
+        var currentDate = startDate
+        for byte in bytes {
+            for bitIndex in 0..<8 {
+                if byte & (UInt8(1) << (7 - bitIndex)) != 0 {
+                    runningDays.append(currentDate)
+                }
+                guard let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
+                currentDate = nextDate
+            }
+        }
+        return runningDays
+    }
+
     let P_LOCATION_ID_COORDS = try! NSRegularExpression(pattern: ".*@X=(\\d+)@Y=(\\d+)@.*")
     
     func parseLocList(locList: JSON, throwErrors: Bool = true) throws -> [Location] {
