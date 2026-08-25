@@ -236,7 +236,23 @@ class TripKitProviderTestCase: XCTestCase {
             }
         }
     }
-    
+
+    func testQueryTripsByName() {
+        guard let hafasProvider = provider as? AbstractHafasClientInterfaceProvider else { return }
+        for (index, testCase):(String, JSON) in settings["queryTripsByName"] {
+            let (request, result) = syncQueryTripsByName(provider: hafasProvider, name: testCase["name"].stringValue)
+            switch result {
+            case .success(let trips):
+                os_log("success: %@", log: .testsLogger, type: .default, trips)
+                XCTAssert(!trips.isEmpty, "received empty result")
+
+                saveFixture(name: "queryTripsByName-\(index)", input: request.responseData, output: trips)
+            case .failure(let error):
+                XCTFail("received an error: \(error)")
+            }
+        }
+    }
+
     // MARK: utility methods
     
     func syncQueryTrips(from: Location, via: Location?, to: Location, date: Date, departure: Bool, products: [Product]?, optimize: Optimize?, walkSpeed: WalkSpeed?, accessibility: Accessibility?, options: [Option]?) -> (HttpRequest, QueryTripsResult) {
@@ -374,6 +390,26 @@ class TripKitProviderTestCase: XCTestCase {
         return (request_, result_)
     }
     
+    func syncQueryTripsByName(provider: AbstractHafasClientInterfaceProvider, name: String) -> (HttpRequest, QueryTripsByNameResult) {
+        let expectation = self.expectation(description: "Network Task")
+        var request: HttpRequest?
+        var result: QueryTripsByNameResult?
+
+        _ = provider.queryTripsByName(name: name) { (httpRequest, completion: QueryTripsByNameResult) in
+            request = httpRequest
+            result = completion
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 30, handler: nil)
+        XCTAssert(request != nil, "No result fetched!")
+        XCTAssert(result != nil, "No result fetched!")
+        guard let request_ = request, let result_ = result else {
+            return (HttpRequest(urlBuilder: UrlBuilder()), .failure(TimeoutError()))
+        }
+        return (request_, result_)
+    }
+
     func saveFixture(name: String, input: Data?, output: Any?) {
         guard let input = input else {
             XCTAssert(false, "No result fetched!")

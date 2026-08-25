@@ -92,5 +92,11 @@
                 "id": "1390163"
             }
         }
+    ],
+    "queryTripsByName": [
+        {
+            "__comment": "Railjet trains run ~5am-11pm; input must not contain a space between category and number (e.g. 'RJ54', not 'RJ 54')",
+            "name": "RJ"
+        }
     ]
 }

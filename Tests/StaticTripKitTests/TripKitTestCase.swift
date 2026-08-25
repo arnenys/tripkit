@@ -258,7 +258,29 @@ class TripKitProviderTestCase: XCTestCase {
             }
         }
     }
-    
+
+    func testQueryTripsByName() {
+        guard let hafasProvider = provider as? AbstractHafasClientInterfaceProvider else { return }
+        for (index, _):(String, JSON) in settings["queryTripsByName"] {
+            guard let (request, expected):(HttpRequest, [Trip]) = loadFixtureArray(name: "queryTripsByName-\(index)") else { continue }
+            do {
+                try hafasProvider.queryTripsByNameParsing(request: request) { _, result in
+                    switch result {
+                    case .success(let trips):
+                        os_log("success: %@", log: .testsLogger, type: .default, trips)
+                        XCTAssert(!trips.isEmpty, "received empty result")
+
+                        XCTAssert(expected == trips)
+                    case .failure(let error):
+                        XCTFail("received an error: \(error)")
+                    }
+                }
+            } catch let error {
+                XCTFail("received an error: \(error)")
+            }
+        }
+    }
+
     // MARK: utility methods
     
     private func loadFile(with name: String, withExtension: String) throws -> Data? {

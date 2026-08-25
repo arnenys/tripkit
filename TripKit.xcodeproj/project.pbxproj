@@ -370,11 +370,13 @@
 		FA5CD29524FBB29800B4990A /* QueryTripsResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB754201E3FD3E500C343F2 /* QueryTripsResult.swift */; };
 		FA5CD29624FBB29800B4990A /* QueryDeparturesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB7541F1E3FD3E500C343F2 /* QueryDeparturesResult.swift */; };
 		FA5CD29724FBB29800B4990A /* QueryJourneyDetailResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */; };
+		69BB906E913B4CAE2E98DF22 /* QueryTripsByNameResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */; };
 		FA5CD29824FBB29900B4990A /* SuggestLocationsResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB754251E3FD3E500C343F2 /* SuggestLocationsResult.swift */; };
 		FA5CD29924FBB29900B4990A /* NearbyLocationsResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB7541B1E3FD3E500C343F2 /* NearbyLocationsResult.swift */; };
 		FA5CD29A24FBB29900B4990A /* QueryTripsResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB754201E3FD3E500C343F2 /* QueryTripsResult.swift */; };
 		FA5CD29B24FBB29900B4990A /* QueryDeparturesResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB7541F1E3FD3E500C343F2 /* QueryDeparturesResult.swift */; };
 		FA5CD29C24FBB29900B4990A /* QueryJourneyDetailResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */; };
+		7C424CA5DEB6763549283A78 /* QueryTripsByNameResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */; };
 		FA5CD29D24FBB29C00B4990A /* StationDepartures.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB754211E3FD3E500C343F2 /* StationDepartures.swift */; };
 		FA5CD29E24FBB29C00B4990A /* SuggestedLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB754241E3FD3E500C343F2 /* SuggestedLocation.swift */; };
 		FA5CD29F24FBB29C00B4990A /* ServingLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA63D93E1E4D11BB00EF0540 /* ServingLine.swift */; };
@@ -786,7 +788,9 @@
 		FAF1FC7B29E478CC003996AE /* NetworkProviderExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF1FC7829E478CC003996AE /* NetworkProviderExtensionTests.swift */; };
 		FAF2B36E21BFF80C006439C5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAF2B36D21BFF80C006439C5 /* Security.framework */; };
 		FAF9955B200E3E1D008D8582 /* QueryJourneyDetailResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */; };
+		5A07A284F2D4374EE5EB5041 /* QueryTripsByNameResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */; };
 		FAF99563200E4532008D8582 /* QueryJourneyDetailResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */; };
+		29B8680EF3F32269F7355B32 /* QueryTripsByNameResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */; };
 		FAFD552B2785847400D6F149 /* VmobilProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFD552A2785847400D6F149 /* VmobilProvider.swift */; };
 		FAFD552C2785847400D6F149 /* VmobilProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFD552A2785847400D6F149 /* VmobilProvider.swift */; };
 		FAFD552D2785847400D6F149 /* VmobilProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFD552A2785847400D6F149 /* VmobilProvider.swift */; };
@@ -1271,6 +1275,7 @@
 		FAF1FC7829E478CC003996AE /* NetworkProviderExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProviderExtensionTests.swift; sourceTree = "<group>"; };
 		FAF2B36D21BFF80C006439C5 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryJourneyDetailResult.swift; sourceTree = "<group>"; };
+		D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryTripsByNameResult.swift; sourceTree = "<group>"; };
 		FAFD552A2785847400D6F149 /* VmobilProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VmobilProvider.swift; sourceTree = "<group>"; };
 		FAFD552F2785862900D6F149 /* VmobilProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VmobilProviderTests.swift; sourceTree = "<group>"; };
 		FAFD55372785869A00D6F149 /* VmobilProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VmobilProviderTests.swift; sourceTree = "<group>"; };
@@ -1542,6 +1547,7 @@
 				FAB754201E3FD3E500C343F2 /* QueryTripsResult.swift */,
 				FAB7541F1E3FD3E500C343F2 /* QueryDeparturesResult.swift */,
 				FAF9955A200E3E1D008D8582 /* QueryJourneyDetailResult.swift */,
+				D824983B8309FB73EE11AA30 /* QueryTripsByNameResult.swift */,
 				FAE0E6422B3AD28A009CC567 /* QueryWagonSequenceResult.swift */,
 			);
 			path = Result;
@@ -2445,6 +2451,7 @@
 				FA5CD2A224FBB29C00B4990A /* InfoText.swift in Sources */,
 				FA5CD25624FBB29000B4990A /* OebbProvider.swift in Sources */,
 				FA5CD29724FBB29800B4990A /* QueryJourneyDetailResult.swift in Sources */,
+				69BB906E913B4CAE2E98DF22 /* QueryTripsByNameResult.swift in Sources */,
 				FA5CD22A24FBB29000B4990A /* AbstractNetworkProvider.swift in Sources */,
 				FA5CD22F24FBB29000B4990A /* DbProvider.swift in Sources */,
 				FAB15DC12798647C00E6A4CB /* NaldoProvider.swift in Sources */,
@@ -2563,6 +2570,7 @@
 				FA5CD2B224FBB29D00B4990A /* InfoText.swift in Sources */,
 				FA5CD28B24FBB29000B4990A /* OebbProvider.swift in Sources */,
 				FA5CD29C24FBB29900B4990A /* QueryJourneyDetailResult.swift in Sources */,
+				7C424CA5DEB6763549283A78 /* QueryTripsByNameResult.swift in Sources */,
 				FA5CD25F24FBB29000B4990A /* AbstractNetworkProvider.swift in Sources */,
 				FA5CD26424FBB29000B4990A /* DbProvider.swift in Sources */,
 				FAB15DC22798647C00E6A4CB /* NaldoProvider.swift in Sources */,
@@ -2840,6 +2848,7 @@
 				FA6015D81E8C214D0069B224 /* VvoProvider.swift in Sources */,
 				FAB754401E3FD49D00C343F2 /* HttpClient.swift in Sources */,
 				FAF9955B200E3E1D008D8582 /* QueryJourneyDetailResult.swift in Sources */,
+				5A07A284F2D4374EE5EB5041 /* QueryTripsByNameResult.swift in Sources */,
 				FAB754361E3FD3E500C343F2 /* Trip.swift in Sources */,
 				FA6015D41E8C1C1C0069B224 /* BsvagProvider.swift in Sources */,
 				FAB18AEE276DE1F800AF9983 /* HTMLTagParser.swift in Sources */,
@@ -3252,6 +3261,7 @@
 				FAFF18B31FA50B9500A8ED69 /* VvoProvider.swift in Sources */,
 				FAFF18B41FA50B9500A8ED69 /* HttpClient.swift in Sources */,
 				FAF99563200E4532008D8582 /* QueryJourneyDetailResult.swift in Sources */,
+				29B8680EF3F32269F7355B32 /* QueryTripsByNameResult.swift in Sources */,
 				FAFF18B51FA50B9500A8ED69 /* Trip.swift in Sources */,
 				FAFF18B61FA50B9500A8ED69 /* BsvagProvider.swift in Sources */,
 				FAB18AEF276DE1F800AF9983 /* HTMLTagParser.swift in Sources */,

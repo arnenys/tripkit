@@ -280,7 +280,31 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
             completion(httpRequest, .failure(err))
         }
     }
-    
+
+    /// Queries trips matching a train name/number (e.g. "RJ 63"), independent of a from/to route.
+    ///
+    /// Not part of the `NetworkProvider` protocol, since non-HCI providers have no way to implement this.
+    ///
+    /// - Note: unlike ``queryJourneyDetail(context:completion:)``, this does not send `getPasslist`/`getPolyline` —
+    ///   at least ÖBB's endpoint rejects the request entirely (`PARSE` error) if they're included.
+    public func queryTripsByName(name: String, onlyCurrentlyRunning: Bool = true, products: [Product]? = nil, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) -> AsyncRequest {
+        let req: [String: Any] = [
+            "input": name,
+            "onlyCR": onlyCurrentlyRunning,
+            "jnyFltrL": [["type": "PROD", "mode": "BIT", "value": productsString(products: products ?? Product.allCases)]]
+        ]
+        let request = wrapJsonApiRequest(meth: "JourneyMatch", req: req, formatted: false)
+        let urlBuilder = UrlBuilder(path: mgateEndpoint, encoding: requestUrlEncoding)
+        requestVerification.appendParameters(to: urlBuilder, requestString: request)
+
+        let httpRequest = HttpRequest(urlBuilder: urlBuilder).setPostPayload(request).setUserAgent(userAgent)
+        return makeRequest(httpRequest) {
+            try self.queryTripsByNameParsing(request: httpRequest, completion: completion)
+        } errorHandler: { err in
+            completion(httpRequest, .failure(err))
+        }
+    }
+
     // MARK: NetworkProvider responses
     
     override func suggestLocationsParsing(request: HttpRequest, constraint: String, types: [LocationType]?, maxLocations: Int, completion: @escaping (HttpRequest, SuggestLocationsResult) -> Void) throws {
@@ -604,7 +628,49 @@ public class AbstractHafasClientInterfaceProvider: AbstractHafasProvider {
         let trip = Trip(id: "", from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: [])
         completion(request, .success(trip: trip, leg: leg))
     }
-    
+
+    func queryTripsByNameParsing(request: HttpRequest, completion: @escaping (HttpRequest, QueryTripsByNameResult) -> Void) throws {
+        let svcRes = try validateResponse(with: request.responseData, requiredMethod: "JourneyMatch")
+        if let error = svcRes["err"].string, error != "OK" {
+            if error == "NO_MATCH" {
+                completion(request, .success(trips: []))
+            } else {
+                throw ParseError(reason: svcRes["errTxt"].string ?? error)
+            }
+            return
+        }
+        let res = svcRes["res"]
+        let common = res["common"]
+        let locList = common["locL"]
+        let prodList = common["prodL"]
+        let opList = common["opL"]
+        let remList = common["remL"]
+        let himList = common["himL"]
+        let polyList = common["polyL"]
+        let loadFactorList = common["tcocL"]
+
+        let locations = try parseLocList(locList: locList)
+        let operators = try parseOpList(opList: opList)
+        let lines = try parseProdList(prodList: prodList, operators: operators)
+        let rems = try parseRemList(remList: remList)
+        let messages = try parseMessageList(himList: himList)
+        let encodedPolyList = try parsePolyList(polyL: polyList)
+        let loadFactors = try parseLoadFactorList(tcocL: loadFactorList)
+
+        var trips: [Trip] = []
+        for jny in res["jnyL"].arrayValue {
+            // Skip individual entries that fail to parse (e.g. a thin stopL) rather than
+            // failing the whole batch – JourneyMatch responses can contain dozens of trips.
+            guard let baseDate = try? parseBaseDate(from: jny["date"].stringValue) else { continue }
+            let duration = (try? parseJsonTime(baseDate: baseDate, dateString: jny["durS"].string))??.timeIntervalSince(baseDate) ?? 0
+            let line = lines[safe: jny["prodX"].int]
+            guard let leg = try? processPublicLeg(jny: jny, baseDate: baseDate, locations: locations, line: line, rems: rems, messages: messages, encodedPolyList: encodedPolyList, loadFactors: loadFactors, departureStop: nil, arrivalStop: nil, tariffClass: nil) else { continue }
+            trips.append(Trip(id: "", from: leg.departure, to: leg.arrival, legs: [leg], duration: duration, fares: []))
+        }
+
+        completion(request, .success(trips: trips))
+    }
+
     // MARK: Request parameters
     
     func jsonTripSearchRequest(from: Location, via: Location?, to: Location, date: Date, departure: Bool, tripOptions: TripOptions, previousContext: Context?, later: Bool) -> [String: Any] {
